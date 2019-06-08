@@ -15,7 +15,7 @@ public class MyCrawler {
     static Logger log = Logger.getLogger(MyCrawler.class.getName());
 
     public static void main(String[] args) throws CloneNotSupportedException {
-            ZhihuUrl url = new ZhihuUrl("294196112",20,0);
+            ZhihuUrl url = new ZhihuUrl("271680368",20,0);
             startCrawler(url);
 
     }
