@@ -32,13 +32,14 @@ import java.util.Map;
  */
 public class HttpService {
     static Logger log = Logger.getLogger(HttpService.class.getName());
-    static CookieStore cookieStore  = new BasicCookieStore();
+    static CookieStore cookieStore = new BasicCookieStore();
     static CloseableHttpClient client = HttpClients.custom().setDefaultCookieStore(cookieStore).build();
     static RequestConfig defaultConfig = RequestConfig.custom().setCookieSpec(CookieSpecs.STANDARD).build();
 
 
     /**
      * 请求url并返回解析成json对象
+     *
      * @param url 请求url
      * @return
      */
@@ -59,22 +60,22 @@ public class HttpService {
         }
         return jsonResult;
     }*/
-    public static JSONObject httpGetCaptcha(String url, HashMap<String,String> headers) {
+    public static JSONObject httpGetCaptcha(String url, HashMap<String, String> headers) {
         JSONObject putResult = null;
         HttpGet get = new HttpGet(url);
         HttpPut put = new HttpPut(url);
         get.setConfig(defaultConfig);
-        for(Map.Entry<String,String> entry:headers.entrySet()){
-            get.addHeader(entry.getKey(),entry.getValue());
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            get.addHeader(entry.getKey(), entry.getValue());
         }
         try {
             HttpResponse getResp = client.execute(get);
             String getStr = EntityUtils.toString(getResp.getEntity());
             JSONObject getResult = JSONObject.parseObject(getStr);
-            if(getResult!=null&&getResult.getString("show_captcha")=="true"){
+            if (getResult != null && getResult.getString("show_captcha") == "true") {
                 log.debug("准备获取验证码");
-                for(Map.Entry<String,String> entry:HeaderBean.headers.entrySet()){
-                    put.addHeader(entry.getKey(),entry.getValue());
+                for (Map.Entry<String, String> entry : HeaderBean.headers.entrySet()) {
+                    put.addHeader(entry.getKey(), entry.getValue());
                 }
                 HttpResponse putResp = client.execute(put);
                 String putStr = EntityUtils.toString(putResp.getEntity());
@@ -85,13 +86,15 @@ public class HttpService {
         }
         return putResult;
     }
+
     /**
      * 请求图片地址并下载
+     *
      * @param flag
      * @param url
      */
-    public static void downloadEachPic(String flag,String url) {
-        String path = MyCrawler.base + "/"+MyCrawler.questionTitle+"/" +flag +"/" +url.substring(23);//url中的图片名称命名
+    public static void downloadEachPic(String flag, String url) {
+        String path = MyCrawler.base + "/" + MyCrawler.questionTitle + "/" + flag + "/" + url.substring(23);//url中的图片名称命名
         try {
             HttpGet request = new HttpGet(url);
             HttpResponse response = client.execute(request);
@@ -102,17 +105,15 @@ public class HttpService {
                 FileOutputStream fos = new FileOutputStream(path);
                 fos.write(data);
                 fos.close();
-                log.debug(Thread.currentThread().getName()+"下载文件:"+path+"成功");
+                log.debug(Thread.currentThread().getName() + "下载文件:" + path + "成功");
             }
         } catch (IOException e) {
-            log.error("下载图片失败："+url+" 错误信息："+e.getMessage());
+            log.error("下载图片失败：" + url + " 错误信息：" + e.getMessage());
         }
     }
 
 
-
-
-    public static JSONObject httpGetAfterLogin(String url){
+    public static JSONObject httpGetAfterLogin(String url) {
         JSONObject jsonResult = null;
         HttpGet get = new HttpGet(url);
         get.setConfig(defaultConfig);
@@ -120,45 +121,46 @@ public class HttpService {
         try {
             resp = client.execute(get);
             if (resp.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-                log.debug("已登陆，请求网页成功："+url);
+                log.debug("已登陆，请求网页成功：" + url);
                 String strResult = EntityUtils.toString(resp.getEntity());
                 jsonResult = JSONObject.parseObject(strResult);
             }
         } catch (IOException e) {
-            log.error("已登陆，请求网页失败："+url);
+            log.error("已登陆，请求网页失败：" + url);
         }
         return jsonResult;
     }
 
     /**
      * 需要三次http请求，一次get获取是否要验证码，一次put获得验证码，一次post传递验证码
+     *
      * @param url
      * @param params
      * @param headers
      * @return
      */
-    public static boolean httpPostLogin(String url, Map<String,String> params,Map<String,String> headers) {
+    public static boolean httpPostLogin(String url, Map<String, String> params, Map<String, String> headers) {
         JSONObject jsonResult = null;
         try {
             HttpPost post = new HttpPost(url);
-            for(Map.Entry<String,String> entry:headers.entrySet()){
+            for (Map.Entry<String, String> entry : headers.entrySet()) {
                 String name = entry.getKey();
                 String value = entry.getValue();
-                post.setHeader(name,value);
+                post.setHeader(name, value);
             }
             List<BasicNameValuePair> nvps = new ArrayList<>();
-            for(Map.Entry<String,String> entry:params.entrySet()){
+            for (Map.Entry<String, String> entry : params.entrySet()) {
                 String name = entry.getKey();
                 String value = entry.getValue();
-                BasicNameValuePair pair = new BasicNameValuePair(name,value);
-                nvps.add(new BasicNameValuePair(name,value));
+                BasicNameValuePair pair = new BasicNameValuePair(name, value);
+                nvps.add(new BasicNameValuePair(name, value));
             }
             post.setEntity(new UrlEncodedFormEntity(nvps, Consts.UTF_8));
             post.setConfig(defaultConfig);
             HttpResponse response = client.execute(post);
             String strResult = EntityUtils.toString(response.getEntity());
             jsonResult = JSONObject.parseObject(strResult);
-            if(jsonResult!=null&&jsonResult.getString("access_token")!=null){
+            if (jsonResult != null && jsonResult.getString("access_token") != null) {
                 log.info("请求登陆成功，准备保存cookie");
                 CookieUtil.save(cookieStore.getCookies());
                 return true;
@@ -170,18 +172,17 @@ public class HttpService {
     }
 
 
-
     public static JSONObject httpPostCaptcha(String captchaApi, String captcha) {
 
-        JSONObject  jsonResult=null;
+        JSONObject jsonResult = null;
         HttpPost post = new HttpPost(captchaApi);
         List<BasicNameValuePair> nvps = new ArrayList<>();
-        nvps.add(new BasicNameValuePair("input_text",captcha));
+        nvps.add(new BasicNameValuePair("input_text", captcha));
         post.setEntity(new UrlEncodedFormEntity(nvps, Consts.UTF_8));
-        for(Map.Entry<String,String> entry:HeaderBean.headers.entrySet()){
+        for (Map.Entry<String, String> entry : HeaderBean.headers.entrySet()) {
             String name = entry.getKey();
             String value = entry.getValue();
-            post.setHeader(name,value);
+            post.setHeader(name, value);
         }
         try {
             HttpResponse resp = client.execute(post);
@@ -197,8 +198,8 @@ public class HttpService {
     public static boolean loadCookies() {
         cookieStore.clear();
         List<Cookie> cookies = CookieUtil.load();
-        if(cookies!=null){
-            for(Cookie cookie:cookies){
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
                 cookieStore.addCookie(cookie);
             }
             log.info("加载cookie成功");
@@ -208,18 +209,18 @@ public class HttpService {
         return false;
     }
 
-    
+
     public static Header[] httpGetHeaders(String checkApi, String headerName) {
         HttpGet get = new HttpGet(checkApi);
         get.setConfig(defaultConfig);
         try {
             HttpResponse resp = client.execute(get);
-            Header[] headers =  resp.getHeaders(headerName);
-            log.debug("获取header"+headers);
+            Header[] headers = resp.getHeaders(headerName);
+            log.debug("获取header" + headers);
             return headers;
         } catch (IOException e) {
             log.debug("获取header失败");
         }
-        return  null;
+        return null;
     }
 }
